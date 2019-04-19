@@ -1,20 +1,54 @@
-#include <iostream> 
+#include <iostream>
 #include <vector>
-#include <climits> 
+#include <climits>
 using namespace std;
 
+#define DRAIN 2
+#define GATE  1
+#define SOURCE 0
+
+#define HIGHV 1
+#define LOWV  0
+#define NULLV 2
+
+#define NMOS  0
+#define PMOS  1
+#define OUTPUT  2
+
+#define AND   0
+#define NAND  1
+#define NOR   2
+#define OR    3
+#define XOR   4
+
+
+struct Mos;
+
 struct Edge{
-    char type; // g(gate), s(source), or d(drain)
     Mos *mPoint;
     int volt ; // on(1) off(0) or not set yet(2)
-    Edge(int v, char t);
-}
+    Edge(int v){
+        volt = v;
+        mPoint = NULL;
+    };
+    Edge(){
+        volt = 2;
+        mPoint = NULL;
+    }
+};
 
 struct Mos{
     Edge edges[3];
-    int tType; // Nmos(0) or Pmos(1) output(2)
-    Mos(int type);
-}
+    int tType = 2; // Nmos(0) or Pmos(1) output(2)
+    int input = 0; //input1(1) input2(2)
+    Mos(int type){
+        tType = type;
+        Edge e1(NULLV);
+        edges[SOURCE] = e1;//source 0
+        edges[GATE] = e1; //gate 1
+        edges[DRAIN] = e1; //drain 2
+    };
+};
 
 
 
@@ -24,13 +58,14 @@ class gate{
         void setInputs(int in1, int in2);
         int getOutput();
     private:
-        vector<Edge> input1;
-        vector<Edge> input2;
+        //vector<Edge&> input1;
+        //vector<Edge&> input2;
         vector<Mos> transistors;
-        outPut O;
+        Mos* BigOut;
+        bool created = false;
         int type; // AND, NAND, OR, NOR, XOR, NOT
 
-        // Gate helper functions
+        // GATE helper functions
         void createAND();
         void createNAND();
         void createOR();
@@ -39,63 +74,16 @@ class gate{
         //createNOT(wer); possible add later (only has one input)
 
         // Create helper functions
-        void addMos(bool t);
-        void addEdge(char t);
-        void addOutput();
+        void addMos(int t, int num);
+        void addEdge(char f, Mos *from, char t, Mos *point);
 
-        // getOutput helper functions 
-        void DFS_helper();
-        void setEdge(int v);
-        
-        
-}
+        void addInput1Edge(Mos* node);
+        void addInput2Edge(Mos* node);
 
-Edge::Edge(int v, char t){
-    volt = v;
-    type = t;
-    mPoint = NULL;
-    oPoint = NULL;
-}
+        void addVoltageEdge(int v, Mos* node);
 
-Mos::Mos(int type){
-    tType = type;
-    edges[0] = Edge(2, 's'); //source
-    edges[1] = Edge(2, 'g'); //gate
-    edges[2] = Edge(2, 'd'); //drain
-} 
-
-gate::gate(int type){
-    switch (type){
-        case 0;
-            createAND();
-        case 1;
-            createNAND();
-        case 2; 
-            createNOR();
-        case 3;
-            createOR();
-        case 4; 
-            createXOR();
-    }
-}
-
-void gate::setInputs(int in1, int in2);
-int gate::getOutput();
-
-void gate::addMos(bool t){
-    newMos = Mos(t);
-    transistors.push_back(newMos);
-}
-
-void gate::addEdge(char t, Mos *from, Mos *point, outPut *pointOut){
-    newEdge = Edge(2, t);
-    if (point == NULL || pointOut == NULL){
-        if (point != NULL){
-            newEdge.mPoint = point;
-            addEdge()
-        }else {
-            newEdge.oPoint = pointOut;
-        }
-    }
-}
-void gate::addOutput();
+        // getOutput helper functions
+        bool mosOn(Mos* node);
+        int DFS_helper(Mos* node);
+        // void setEdge(int v);
+};
