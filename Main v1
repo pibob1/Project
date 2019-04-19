@@ -1,0 +1,219 @@
+#include <iostream>
+#include <vector>
+#include <climits>
+#include "project.hpp"
+using namespace std;
+
+gate::gate(int type){
+    switch (type){
+        case AND:
+            createAND();
+        case NAND:
+            createNAND();
+        case NOR:
+            createNOR();
+        case OR:
+            createOR();
+        case XOR:
+            createXOR();
+    }
+}
+
+void gate::addMos(int t, int num){
+    Mos newMos(t); // 0 for Nmos, 1 for Pmos, 2 for outPut
+    newMos.input = num;
+    transistors.push_back(newMos);
+}
+
+// void gate::connectSource(){
+//   addEdge(S,D)
+// }
+void gate::addEdge(char f, Mos *from, char t, Mos *point){ //connects "f" terminal of the "from" transistor the the "t"  terminal of the "point" transistor
+    if (f == 'g'){  //if "from" mosfet terminal is the gate
+        (from->edges[GATE]).mPoint = point;  //add edge to edge array
+    }else if (f == 's'){  //if "from" mosfet terminal is the source
+        (from->edges[SOURCE]).mPoint = point;  //add edge to edge array
+    }else if (f == 'd'){  //if "from" mosfet terminal is the drain
+        (from->edges[DRAIN]).mPoint = point;  //add edge to edge array
+    }
+
+    if (t == 'g'){  //if "point" mosfet terminal is the gate
+        (point->edges[GATE]).mPoint = from;
+    }else if (t == 's'){
+        (point->edges[SOURCE]).mPoint = from;
+    }else if (t == 'd'){
+        (point->edges[DRAIN]).mPoint = from;
+    }
+}
+
+void gate::addInput1Edge(Mos* node){  //sets both edges at the gate to be input1
+    (node->edges[GATE]).mPoint = NULL;
+    //Edge newEdge(NULLV);
+    //newEdge.mPoint = node;
+    //input1.push_back(newEdge);
+    //input1.push_back(node->edges[GATE]);
+}
+
+void gate::addInput2Edge(Mos* node){  //sets both edges at the gate to be input2
+    (node->edges[GATE]).mPoint = NULL;
+    //Edge newEdge(NULLV);
+    //newEdge.mPoint = node;
+    //input2.push_back(newEdge);
+    //input2.push_back(node->edges[GATE]);
+}
+
+void gate::addVoltageEdge(int v, Mos* node){
+    (node->edges[SOURCE]).volt = v;
+    (node->edges[SOURCE]).mPoint = NULL;
+}
+
+void gate::createAND(){
+    if (created){
+      cout << "Sorry, Graph is already instantiated" << endl;
+      return;
+    }
+    created = true;
+    //create two nmos, two pmos, and one output node
+    addMos(NMOS, 1);
+    addMos(NMOS, 2);
+    addMos(OUTPUT, 0);
+    addMos(PMOS, 1);
+    addMos(PMOS, 2);
+    Mos* Nmos1 = &transistors[0];
+    Mos* Nmos2 = &transistors[1];
+    Mos* Out = &transistors[2];
+    Mos* Pmos1 = &transistors[3];
+    Mos* Pmos2 = &transistors[4];
+    BigOut = Out;
+    //connect the nodes
+    addEdge('d', Nmos1, 's', Nmos2);  //N1 and N2 are in series
+    addEdge('d', Nmos2, 'g', Out);
+    addEdge('d', Pmos1, 's', Out);   //M1 and M2 are in parallel
+    addEdge('d', Pmos2, 'd', Out);
+    //define edges as inputs
+    addInput1Edge(Nmos1);
+    addInput1Edge(Pmos1);
+    addInput2Edge(Nmos2);
+    addInput2Edge(Pmos2);
+    //define edges as High or Low voltages
+    addVoltageEdge(HIGHV, Nmos1);
+    addVoltageEdge(LOWV, Pmos1);
+    addVoltageEdge(LOWV, Pmos2);
+}
+
+void gate::createNAND(){}
+
+void gate::createOR(){
+    if (created){
+      cout << "Sorry, Graph is already instantiated" << endl;
+      return;
+    }
+    created = true;
+    //create two nmos, two pmos, and one output node
+    addMos(PMOS, 1);
+    addMos(PMOS, 2);
+    addMos(OUTPUT, 0);
+    addMos(NMOS, 1);
+    addMos(NMOS, 2);
+    Mos* Pmos1 = &transistors[0];
+    Mos* Pmos2 = &transistors[1];
+    Mos* Out = &transistors[2];
+    Mos* Nmos1 = &transistors[3];
+    Mos* Nmos2 = &transistors[4];
+    BigOut = Out;
+    //connect the nodes-
+    addEdge('d', Pmos1, 's', Pmos2);  //N1 and N2 are in series
+    addEdge('d', Pmos2, 'g', Out);
+    addEdge('d', Nmos1, 's', Out);   //M1 and M2 are in parallel
+    addEdge('d', Nmos2, 'd', Out);
+    //define edges as inputs
+    addInput1Edge(Pmos1);
+    addInput1Edge(Nmos1);
+    addInput2Edge(Pmos2);
+    addInput2Edge(Nmos2);
+    //define edges as High or Low voltages
+    addVoltageEdge(LOWV, Pmos1);
+    addVoltageEdge(HIGHV, Nmos1);
+    addVoltageEdge(HIGHV, Nmos2);
+}
+void gate::createNOR(){}
+void gate::createXOR(){}
+
+int gate::DFS_helper(Mos* node){
+  int outvolt = NULLV;
+  //cout << "before moson" << endl;
+  // cout << "DFS_helper source volt value: " << node->edges[SOURCE].volt << endl;
+  // cout << "DFS_helper moson(node): " << mosOn(node) << endl;
+  if(mosOn(node)){
+    //cout << "after moson" << endl;
+    if(node->edges[SOURCE].mPoint == NULL){
+      outvolt = node->edges[SOURCE].volt;
+    }
+    else{
+      outvolt = DFS_helper((node->edges[SOURCE]).mPoint);
+    }
+  }
+  return outvolt;
+}
+
+bool gate::mosOn(Mos* node){
+  // cout << "Node is of type: " << node->tType<< endl;
+  // cout << "Node gate volatge is: " << node->edges[GATE].volt << endl;
+  if(node->tType == NMOS){
+    if((node->edges[GATE]).volt == HIGHV){
+      return true;
+    }
+  }
+  if(node->tType == PMOS){
+    if((node->edges[GATE]).volt == LOWV){
+      return true;
+    }
+  }
+  return false;
+}
+
+int gate::getOutput(){
+  int output = NULLV;
+  int temp;
+  // cout << "gate voltage transistor 0" << (transistors[0].edges[GATE]).volt << endl;
+  //cout << "before first for loop" << endl;
+  // cout << BigOut->edges[0].mPoint->tType << endl;
+  for(int i = 0; i < 3; i++){
+    //cout << "getOutput for loop iteration: " << i << endl;
+    temp = DFS_helper(BigOut->edges[i].mPoint);
+    // cout << "DFS returns this: " << temp << endl;
+    //cout << "after dfs helper iteration: " << i << endl;
+    if(temp != NULLV){
+        output = temp;
+    }
+  }
+  return output;
+}
+
+void gate::setInputs(int in1, int in2){
+  vector<Mos>::iterator i;
+  for (i = transistors.begin(); i != transistors.end(); ++i){
+    if((*i).tType != OUTPUT){
+      if ((*i).input == 1){
+        (*i).edges[GATE] = in1;
+      }
+      if ((*i).input == 2){
+        (*i).edges[GATE] = in2;
+      }
+    }
+  }
+}
+
+int main(){
+  int input1 = 0;
+  int input2 = 1;
+  gate g(AND);
+  g.setInputs(input1, input2);
+  cout << "AND gate with inputs:" << input1 << " , " << input2 << ": OUTPUT-> "<< g.getOutput() << endl;
+
+  gate dic(OR);
+  dic.setInputs(input1, input2);
+  cout << "OR gate with inputs:" << input1 << " , " << input2 << ": OUTPUT-> "<< dic.getOutput() << endl;
+  // g.setInputs(1, 1);
+  // cout << g.getOutput() << endl;
+}
