@@ -16,6 +16,8 @@ gate::gate(int type){
             createOR();
         case XOR:
             createXOR();
+        case XNOR:
+            createXNOR();
     }
 }
 
@@ -101,7 +103,39 @@ void gate::createAND(){
     addVoltageEdge(LOWV, Pmos2);
 }
 
-void gate::createNAND(){}
+void gate::createNAND(){
+    if (created){
+      cout << "Sorry, Graph is already instantiated" << endl;
+      return;
+    }
+    created = true;
+    //create two nmos, two pmos, and one output node
+    addMos(PMOS, 1);
+    addMos(PMOS, 2);
+    addMos(OUTPUT, 0);
+    addMos(NMOS, 1);
+    addMos(NMOS, 2);
+    Mos* Nmos1 = &transistors[0];
+    Mos* Nmos2 = &transistors[1];
+    Mos* Out = &transistors[2];
+    Mos* Pmos1 = &transistors[3];
+    Mos* Pmos2 = &transistors[4];
+    BigOut = Out;
+    //connect the nodes
+    addEdge('d', Nmos1, 's', Nmos2);  //N1 and N2 are in series
+    addEdge('d', Nmos2, 'g', Out);
+    addEdge('d', Pmos1, 's', Out);   //M1 and M2 are in parallel
+    addEdge('d', Pmos2, 'd', Out);
+    //define edges as inputs
+    addInput1Edge(Nmos1);
+    addInput1Edge(Pmos1);
+    addInput2Edge(Nmos2);
+    addInput2Edge(Pmos2);
+    //define edges as High or Low voltages
+    addVoltageEdge(HIGHV, Nmos1);
+    addVoltageEdge(LOWV, Pmos1);
+    addVoltageEdge(LOWV, Pmos2);
+}
 
 void gate::createOR(){
     if (created){
@@ -136,8 +170,75 @@ void gate::createOR(){
     addVoltageEdge(HIGHV, Nmos1);
     addVoltageEdge(HIGHV, Nmos2);
 }
-void gate::createNOR(){}
-void gate::createXOR(){}
+
+void gate::createNOR(){
+    if (created){
+      cout << "Sorry, Graph is already instantiated" << endl;
+      return;
+    }
+    created = true;
+    //create two nmos, two pmos, and one output node
+    addMos(NMOS, 1);
+    addMos(NMOS, 2);
+    addMos(OUTPUT, 0);
+    addMos(PMOS, 1);
+    addMos(PMOS, 2);
+    Mos* Pmos1 = &transistors[0];
+    Mos* Pmos2 = &transistors[1];
+    Mos* Out = &transistors[2];
+    Mos* Nmos1 = &transistors[3];
+    Mos* Nmos2 = &transistors[4];
+    BigOut = Out;
+    //connect the nodes-
+    addEdge('d', Pmos1, 's', Pmos2);  //N1 and N2 are in series
+    addEdge('d', Pmos2, 'g', Out);
+    addEdge('d', Nmos1, 's', Out);   //M1 and M2 are in parallel
+    addEdge('d', Nmos2, 'd', Out);
+    //define edges as inputs
+    addInput1Edge(Pmos1);
+    addInput1Edge(Nmos1);
+    addInput2Edge(Pmos2);
+    addInput2Edge(Nmos2);
+    //define edges as High or Low voltages
+    addVoltageEdge(LOWV, Pmos1);
+    addVoltageEdge(HIGHV, Nmos1);
+    addVoltageEdge(HIGHV, Nmos2);
+
+}
+
+void gate::createXOR(){
+    if (created){
+      cout << "Sorry, Graph is already instantiated" << endl;
+      return;
+    }
+    created = true;
+    //create two nmos, two pmos, and one output node
+    addMos(NMOS, 1);
+    addMos(NMOS, 2);
+    addMos(OUTPUT, 0);
+    addMos(PMOS, 1);
+    addMos(PMOS, 2);
+    Mos* Pmos1 = &transistors[0];
+    Mos* Pmos2 = &transistors[1];
+    Mos* Out = &transistors[2];
+    Mos* Nmos1 = &transistors[3];
+    Mos* Nmos2 = &transistors[4];
+    BigOut = Out;
+    //connect the nodes-
+    addEdge('d', Pmos1, 's', Pmos2);  //N1 and N2 are in series
+    addEdge('d', Pmos2, 'g', Out);
+    addEdge('d', Nmos1, 's', Out);   //M1 and M2 are in parallel
+    addEdge('d', Nmos2, 'd', Out);
+    //define edges as inputs
+    addInput1Edge(Pmos1);
+    addInput1Edge(Nmos1);
+    addInput2Edge(Pmos2);
+    addInput2Edge(Nmos2);
+    //define edges as High or Low voltages
+    addVoltageEdge(LOWV, Pmos1);
+    addVoltageEdge(HIGHV, Nmos1);
+    addVoltageEdge(HIGHV, Nmos2);
+}
 
 int gate::DFS_helper(Mos* node){
   int outvolt = NULLV;
@@ -175,10 +276,14 @@ bool gate::mosOn(Mos* node){
 int gate::getOutput(){
   int output = NULLV;
   int temp;
+  int looper = 3;
+  if (type == XOR || type == XNOR){
+    looper = 4;
+  }
   // cout << "gate voltage transistor 0" << (transistors[0].edges[GATE]).volt << endl;
   //cout << "before first for loop" << endl;
   // cout << BigOut->edges[0].mPoint->tType << endl;
-  for(int i = 0; i < 3; i++){
+  for(int i = 0; i < looper; i++){
     //cout << "getOutput for loop iteration: " << i << endl;
     temp = DFS_helper(BigOut->edges[i].mPoint);
     // cout << "DFS returns this: " << temp << endl;
@@ -207,7 +312,8 @@ void gate::setInputs(int in1, int in2){
 int main(){
   int input1 = 0;
   int input2 = 1;
-  gate g(AND);
+  gate
+  heap[i] = g(AND);
   g.setInputs(input1, input2);
   cout << "AND gate with inputs:" << input1 << " , " << input2 << ": OUTPUT-> "<< g.getOutput() << endl;
 
@@ -216,4 +322,144 @@ int main(){
   cout << "OR gate with inputs:" << input1 << " , " << input2 << ": OUTPUT-> "<< dic.getOutput() << endl;
   // g.setInputs(1, 1);
   // cout << g.getOutput() << endl;
+}
+
+
+int displayMenu(){
+  int choice;
+  string input;
+  cout << "1. set up circuit" << endl;
+  cout << "2. set outputs" << endl;
+  cout << "3. print tree" << endl;
+  cout << "4. get output" << endl;
+  getline(cin, input);
+  choice = stoi(input);
+  return choice;
+}
+
+int setCircuitMenu(){
+  int choice;
+  string input;
+  cout << "0. AND gate" << endl;
+  cout << "1. NAND gate" << endl;
+  cout << "2. NOR gate" << endl;
+  cout << "3. OR gate" << endl;
+  cout << "4. XOR gate" << endl;
+  cout << "5. XNOR gate" << endl;
+  getline(cin, input);
+  choice = stoi(input);
+  return choice;
+}
+
+int getInput(int inputNum){
+  int choice;
+  string input;
+  cout << "Enter a 0 or a 1 for input number " << inputNum << " for this node" << endl;
+  getline(cin, input);
+  choice = stoi(input);
+  return choice;
+}
+
+heap::heap(int heapsize){
+  maxLength = heapSize;
+  hep = new gate[maxLength];
+  currLength = 0;
+}
+
+heap::~heap(){
+  delete[] hep;
+}
+
+void heap::addNodes(){
+  for (int i = 0; i < maxLength; i++){
+    hep[i] = gate(setCircuitMenu());
+  }
+}
+
+void heap::setInput(){
+
+}
+
+int heap::run(){
+  for (int i = maxLength - 1; i > -1; i--){
+
+  }
+}
+
+void PriorityQueue::repairDownward(int nodeIndex){
+    int c1 = (nodeIndex * 2) + 1;
+    int c2 = (nodeIndex * 2) + 2;
+    int temp = nodeIndex;
+    if ((priorityQueue[c1].groupSize < priorityQueue[nodeIndex].groupSize) && (c1 < currentQueueSize)){
+        temp = c1;
+    }else if ((priorityQueue[c1].groupSize == priorityQueue[nodeIndex].groupSize) && (priorityQueue[c1].cookingTime < priorityQueue[nodeIndex].cookingTime) && (c1 < currentQueueSize)){
+        temp = c1;
+    }
+    if ((priorityQueue[c2].groupSize < priorityQueue[temp].groupSize) && (c2 < currentQueueSize)){
+        temp = c2;
+    }else if ((priorityQueue[c2].groupSize == priorityQueue[temp].groupSize) && (priorityQueue[c2].cookingTime < priorityQueue[temp].cookingTime) && (c2 < currentQueueSize)){
+        temp = c2;
+    }
+    if (temp != nodeIndex){
+        swap(priorityQueue[temp], priorityQueue[nodeIndex]);
+        repairDownward(temp);
+    }
+}
+
+GroupNode PriorityQueue::peek(){
+    if (isEmpty()){
+        cout << "Heap empty, nothing to peek" << endl;
+    }
+    return priorityQueue[0];
+}
+
+bool PriorityQueue::isFull(){
+    if (currentQueueSize == maxQueueSize){
+        return true;
+    }
+    return false;
+}
+
+bool PriorityQueue::isEmpty(){
+    if (currentQueueSize == 0){
+        return true;
+    }
+    return false;
+}
+
+void swap(GroupNode* x, GroupNode* y){
+    GroupNode temp = *x;
+    *x = *y;
+    *y = temp;
+}
+
+void PriorityQueue::repairUpward(int nodeIndex){
+    int p = (nodeIndex - 1) / 2;
+    int temp = p;
+    if (nodeIndex == 0){
+        return;
+    }
+    if (priorityQueue[p].groupSize > priorityQueue[nodeIndex].groupSize){
+        temp = nodeIndex;
+    }else if (priorityQueue[p].groupSize == priorityQueue[nodeIndex].groupSize && priorityQueue[p].cookingTime > priorityQueue[nodeIndex].cookingTime){
+        temp = nodeIndex;
+    }
+    if (temp != p){
+        swap(priorityQueue[p], priorityQueue[temp]);
+        repairUpward(p);
+    }
+}
+
+void PriorityQueue::enqueue (string _groupName, int _groupSize, int _cookingTime){
+    if (isFull()){
+        cout << "Heap full, cannot enqueue" << endl;
+        return;
+    }
+    GroupNode newN;
+    newN.groupName = _groupName;
+    newN.groupSize = _groupSize;
+    newN.cookingTime = _cookingTime;
+    priorityQueue[currentQueueSize] = newN;
+    currentQueueSize++;
+    repairUpward(currentQueueSize - 1);
 }
