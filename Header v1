@@ -20,6 +20,9 @@ using namespace std;
 #define NOR   2
 #define OR    3
 #define XOR   4
+#define XNOR  5
+
+#define EDGELENGTH 4
 
 
 struct Mos;
@@ -32,15 +35,15 @@ struct Edge{
         mPoint = NULL;
     };
     Edge(){
-        volt = 2;
+        volt = NULLV;
         mPoint = NULL;
     }
 };
 
 struct Mos{
-    Edge edges[3];
-    int tType = 2; // Nmos(0) or Pmos(1) output(2)
-    int input = 0; //input1(1) input2(2)
+    Edge edges[EDGELENGTH];
+    int tType = OUTPUT; // Nmos(0) or Pmos(1) output(2)
+    int input = NULLV; //input1(1) input2(2)
     Mos(int type){
         tType = type;
         Edge e1(NULLV);
@@ -71,6 +74,7 @@ class gate{
         void createOR();
         void createNOR();
         void createXOR();
+        void createXNOR();
         //createNOT(wer); possible add later (only has one input)
 
         // Create helper functions
@@ -87,3 +91,35 @@ class gate{
         int DFS_helper(Mos* node);
         // void setEdge(int v);
 };
+
+class PriorityQueue
+{
+    public:
+    PriorityQueue(int queueSize);
+    ~PriorityQueue();
+    void enqueue (std::string _groupName, int _groupSize, int _cookingTime);
+void dequeue();
+GroupNode peek();
+bool isFull();
+bool isEmpty();
+    private:
+void repairUpward(int nodeIndex);
+void repairDownward(int nodeIndex);
+GroupNode* priorityQueue; //pointer to the array used to implement priority queue
+    int currentQueueSize; //number of group currently in the priority queue
+    int maxQueueSize; //maximum capacity of priority queue
+};
+
+class heap{
+  public:
+    heap(int heapSize);
+    ~heap();
+    void addNodes();
+    void setInput();
+    void printTree();
+    int run();
+  private:
+    int currLength;
+    int maxLength;
+    gate* hep;
+}
